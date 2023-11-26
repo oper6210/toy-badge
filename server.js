@@ -248,3 +248,24 @@ app.get("/mybadge/:userId?", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+// 6. 배지 삭제
+app.delete("/badge/:badgeId", async (req, res) => {
+  try {
+    const badgeId = req.params.badgeId;
+
+    // 해당 ID의 배지가 데이터베이스에 있는지 확인
+    const badgeResult = await connection.query("SELECT * FROM tblbadge WHERE badgeId = $1", [badgeId]);
+
+    if (badgeResult.rows.length === 0) {
+      res.status(404).send("Badge not found");
+    } else {
+      // 해당 ID의 배지를 데이터베이스에서 삭제
+      await connection.query("DELETE FROM tblbadge WHERE badgeId = $1", [badgeId]);
+      res.status(200).send("Badge deleted successfully");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
