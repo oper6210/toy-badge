@@ -3,7 +3,7 @@ const fs = require("fs");
 const express = require("express");
 // const session = require("express-session");
 const bodyParser = require("body-parser");
-const cors = require('cors');
+const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 8080;
 // const FileStore = require("session-file-store")(session);
@@ -11,9 +11,11 @@ const port = process.env.PORT || 8080;
 // JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors({
-  origin : '*',
-}));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 // JSON 파일에서 데이터베이스 구성 정보 읽고 파싱하기
 const data = fs.readFileSync("./database.json");
@@ -32,6 +34,13 @@ const connection = new Client({
 // 파일 업로드를 위한 Multer 모듈 설정
 const multer = require("multer");
 const multerGoogleStorage = require("multer-google-storage");
+
+const { Storage } = require("@google-cloud/storage"); // Storage 클래스를 임포트
+const storage = new Storage({
+  projectId: "testtt-f922d",
+  keyFilename: "./testtt-f922d-395ea43cf6f1.json",
+});
+
 const upload = multer({
   storage: multerGoogleStorage.storageEngine({
     bucket: "bagde_stg",
@@ -52,7 +61,6 @@ connection.connect((err) => {
   }
 });
 
-
 // 이미지 업로드를 위한 Multer 설정
 // app.use("/image", express.static("./upload"));
 
@@ -62,23 +70,46 @@ app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
 // 1. 배지 발행
 app.post("/badge", upload.single("image"), async (req, res) => {
   try {
-
     const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
 
-      const { badgeName, content, detailContent } = req.body;
+    // JSON 데이터 준비
+    const jsonData = {
+      description : req.body.content,
+      imageurl: imageUrl,
+      name: req.body.badgeName,
+    };
 
-      // 현재 시간을 생성
-      const currentDatetime = new Date();
-      // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
-      const formattedDatetime = currentDatetime.toISOString().slice(0, 19).replace("T", " ");
+    const jsonFilename = `${req.body.userName}.json`;
 
-      const result = await connection.query(
-        "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [imageUrl, badgeName, content, detailContent, formattedDatetime]
-      );
+    const bucketName = "bagde_stg";
 
-      res.status(201).json(result.rows[0]);
+    // 업로드할 JSON 파일의 전체 경로 (버킷 내부 경로 포함)
+    const jsonFilePath = `json/${jsonFilename}`;
 
+    // JSON 파일을 문자열로 변환
+    const jsonString = JSON.stringify(jsonData);
+
+    // 버킷 내 JSON 파일 업로드
+    await storage.bucket(bucketName).file(jsonFilePath).save(jsonString, {
+      contentType: "application/json",
+    });
+
+    const { badgeName, content, detailContent } = req.body;
+
+    // 현재 시간을 생성
+    const currentDatetime = new Date();
+    // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
+    const formattedDatetime = currentDatetime
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+
+    const result = await connection.query(
+      "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [imageUrl, badgeName, content, detailContent, formattedDatetime]
+    );
+
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
@@ -92,7 +123,10 @@ app.get("/badge/:badgeId?", async (req, res) => {
 
     if (badgeId) {
       // badgeId가 주어진 경우 해당 배지만 조회
-      const result = await connection.query("SELECT * FROM tblbadge WHERE badgeId = $1", [badgeId]);
+      const result = await connection.query(
+        "SELECT * FROM tblbadge WHERE badgeId = $1",
+        [badgeId]
+      );
 
       if (result.rows.length === 0) {
         res.status(404).send("Badge not found");
@@ -139,7 +173,10 @@ app.post("/mybadge", async (req, res) => {
     // 현재 시간을 생성
     const currentDatetime = new Date();
     // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
-    const formattedDatetime = currentDatetime.toISOString().slice(0, 19).replace("T", " ");
+    const formattedDatetime = currentDatetime
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
 
     // 해당 badgeId와 userId의 조합이 이미 존재하는지 확인
     const existingBadge = await connection.query(
