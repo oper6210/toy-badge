@@ -62,23 +62,8 @@ app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
 // 1. 배지 발행
 app.post("/badge", upload.single("image"), async (req, res) => {
   try {
-    const imageBuffer = req.file.buffer;
-    const imageName = `${Date.now()}_${req.file.originalname}`;
 
-    const file = bucket.file(imageName);
-    const fileStream = file.createWriteStream({
-      metadata: {
-        contentType: req.file.mimetype,
-      },
-    });
-
-    fileStream.on('error', (err) => {
-      console.error(err);
-      res.status(500).send("Internal Server Error");
-    });
-
-    fileStream.on('finish', async () => {
-      const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
+    const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
 
       const { badgeName, content, detailContent } = req.body;
 
@@ -93,9 +78,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
       );
 
       res.status(201).json(result.rows[0]);
-    });
 
-    fileStream.end(imageBuffer);
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
