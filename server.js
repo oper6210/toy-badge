@@ -260,9 +260,17 @@ app.delete("/badge/:badgeId", async (req, res) => {
     if (badgeResult.rows.length === 0) {
       res.status(404).send("Badge not found");
     } else {
-      // 해당 ID의 배지를 데이터베이스에서 삭제
-      await connection.query("DELETE FROM tblbadge WHERE badgeId = $1", [badgeId]);
-      res.status(200).send("Badge deleted successfully");
+      // 해당 배지가 이미 사용자에게 수여되었는지 확인
+      const awardedBadgeResult = await connection.query("SELECT * FROM tbluserBadge WHERE badgeId = $1", [badgeId]);
+
+      if (awardedBadgeResult.rows.length > 0) {
+        // 이미 사용자에게 수여된 배지는 삭제할 수 없음
+        res.status(400).send("이미 사용자에게 수여된 배지는 삭제할 수 없음");
+      } else {
+        // 해당 ID의 배지를 데이터베이스에서 삭제
+        await connection.query("DELETE FROM tblbadge WHERE badgeId = $1", [badgeId]);
+        res.status(200).send("Badge deleted successfully");
+      }
     }
   } catch (error) {
     console.error(error);
