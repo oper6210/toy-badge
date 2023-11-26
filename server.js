@@ -72,14 +72,23 @@ app.post("/badge", upload.single("image"), async (req, res) => {
   try {
     const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
 
+    // Fetch the last badgeid
+    const lastBadgeIdResult = await connection.query(
+      "SELECT badgeid FROM tblbadge ORDER BY badgeid DESC LIMIT 1"
+    );
+
+    // Calculate the next badgeid
+    const nextBadgeId = lastBadgeIdResult.rows.length > 0 ? lastBadgeIdResult.rows[0].badgeid + 1 : 1;
+
     // JSON 데이터 준비
     const jsonData = {
-      description : req.body.content,
+      description: req.body.content,
       imageurl: imageUrl,
       name: req.body.badgeName,
     };
 
-    const jsonFilename = `${req.body.userName}.json`;
+    // Create jsonFilename using the calculated badgeid
+    const jsonFilename = `${nextBadgeId}.json`;
 
     const bucketName = "bagde_stg";
 
