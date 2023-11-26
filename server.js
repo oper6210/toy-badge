@@ -31,18 +31,17 @@ const connection = new Client({
 
 // 파일 업로드를 위한 Multer 모듈 설정
 const multer = require("multer");
-const multerGoogleStorage = require('multer-google-storage');
-
+const multerGoogleStorage = require("multer-google-storage");
 const upload = multer({
   storage: multerGoogleStorage.storageEngine({
-      bucket: 'bagde_stg',
-      projectId: 'testtt-f922d',
-      keyFilename: './testtt-f922d-395ea43cf6f1.json',
-      filename: (req, file, cb) => {
-          cb(null, `quizimage/${Date.now()}_${file.originalname}`);
-      },
+    bucket: "bagde_stg",
+    projectId: "testtt-f922d",
+    keyFilename: "./testtt-f922d-395ea43cf6f1.json",
+    filename: (req, file, cb) => {
+      cb(null, `quizimage/${Date.now()}_${file.originalname}`);
+    },
   }),
-  limits: { fileSize: 5*1024*1024},
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // 데이터베이스 연결
@@ -79,7 +78,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     });
 
     fileStream.on('finish', async () => {
-      const imageUrl = `https://storage.googleapis.com/${bucket.name}/${imageName}`;
+      const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
 
       const { badgeName, content, detailContent } = req.body;
 
