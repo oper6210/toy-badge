@@ -51,10 +51,11 @@ const upload = multer({
     },
     metadata: (req, file, cb) => {
       // Content-Type을 이미지로 설정
-      cb(null, { contentType: 'image/*' });
-    }
+      cb(null, { contentType: "image/*" });
+    },
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
+  contentType: () => "image/*",
 });
 
 // 데이터베이스 연결
@@ -146,7 +147,7 @@ app.get("/badge/:badgeId?", async (req, res) => {
     if (badgeId) {
       // badgeId가 주어진 경우 해당 배지만 조회
       const result = await connection.query(
-        "SELECT * FROM tblbadge WHERE badgeId = $1 order by badgeid " ,
+        "SELECT * FROM tblbadge WHERE badgeId = $1 order by badgeid ",
         [badgeId]
       );
 
@@ -157,7 +158,9 @@ app.get("/badge/:badgeId?", async (req, res) => {
       }
     } else {
       // badgeId가 주어지지 않은 경우 전체 배지 목록 조회
-      const result = await connection.query("SELECT * FROM tblbadge order by badgeid");
+      const result = await connection.query(
+        "SELECT * FROM tblbadge order by badgeid"
+      );
 
       if (result.rows.length === 0) {
         res.status(404).send("No badges found");
