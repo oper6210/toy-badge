@@ -101,6 +101,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     // 버킷 내 JSON 파일 업로드
     await storage.bucket(bucketName).file(jsonFilePath).save(jsonString, {
       contentType: "application/json",
+      encoding : "utf-8",
     });
 
     const { badgeName, content, detailContent } = req.body;
