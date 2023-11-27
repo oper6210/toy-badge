@@ -49,6 +49,10 @@ const upload = multer({
     filename: (req, file, cb) => {
       cb(null, `quizimage/${Date.now()}_${file.originalname}`);
     },
+    metadata: (req, file, cb) => {
+      // Content-Type을 이미지로 설정
+      cb(null, { contentType: 'image/*' });
+    }
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
