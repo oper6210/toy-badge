@@ -75,6 +75,10 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     const lastBadgeIdResult = await connection.query(
       "SELECT badgeid FROM tblcountbadge ORDER BY badgeid DESC LIMIT 1"
     );
+    const result2 = await connection.query(
+      "INSERT INTO tblcountbadge (createDt) VALUES (CURRENT_TIMESTAMP)"
+    );
+    
 
     // Calculate the next badgeid
     const nextBadgeId =
