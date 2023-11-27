@@ -74,7 +74,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
 
     // Fetch the last badgeid
     const lastBadgeIdResult = await connection.query(
-      "SELECT badgeid FROM tblbadge ORDER BY badgeid DESC LIMIT 1"
+      "SELECT count FROM tbluser"
     );
 
     // Calculate the next badgeid
@@ -126,6 +126,9 @@ app.post("/badge", upload.single("image"), async (req, res) => {
       "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [imageUrl, badgeName, content, detailContent, formattedDatetime]
     );
+
+    // 2. tbluser의 count 컬럼 값을 1 증가
+    await connection.query("UPDATE tbluser SET count = count + 1");
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
