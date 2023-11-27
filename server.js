@@ -142,7 +142,7 @@ app.get("/badge/:badgeId?", async (req, res) => {
     if (badgeId) {
       // badgeId가 주어진 경우 해당 배지만 조회
       const result = await connection.query(
-        "SELECT * FROM tblbadge WHERE badgeId = $1",
+        "SELECT * FROM tblbadge WHERE badgeId = $1 order by badgeid " ,
         [badgeId]
       );
 
@@ -153,7 +153,7 @@ app.get("/badge/:badgeId?", async (req, res) => {
       }
     } else {
       // badgeId가 주어지지 않은 경우 전체 배지 목록 조회
-      const result = await connection.query("SELECT * FROM tblbadge");
+      const result = await connection.query("SELECT * FROM tblbadge order by badgeid");
 
       if (result.rows.length === 0) {
         res.status(404).send("No badges found");
