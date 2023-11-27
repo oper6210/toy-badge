@@ -78,7 +78,10 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     );
 
     // Calculate the next badgeid
-    const nextBadgeId = lastBadgeIdResult.rows.length > 0 ? lastBadgeIdResult.rows[0].badgeid + 1 : 1;
+    const nextBadgeId =
+      lastBadgeIdResult.rows.length > 0
+        ? lastBadgeIdResult.rows[0].badgeid + 1
+        : 1;
 
     // JSON 데이터 준비
     const jsonData = {
@@ -98,11 +101,16 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     // JSON 파일을 문자열로 변환
     const jsonString = JSON.stringify(jsonData);
 
+    // UTF-8로 인코딩된 Buffer 생성
+    const utf8EncodedBuffer = Buffer.from(jsonString, "utf-8");
+
     // 버킷 내 JSON 파일 업로드
-    await storage.bucket(bucketName).file(jsonFilePath).save(jsonString, {
-      contentType: "application/json",
-      encoding : "utf-8",
-    });
+    await storage
+      .bucket(bucketName)
+      .file(jsonFilePath)
+      .save(utf8EncodedBuffer, {
+        contentType: "application/json",
+      });
 
     const { badgeName, content, detailContent } = req.body;
 
@@ -256,13 +264,18 @@ app.delete("/badge/:badgeId", async (req, res) => {
     const badgeId = req.params.badgeId;
 
     // 해당 ID의 배지가 데이터베이스에 있는지 확인
-    const badgeResult = await connection.query("SELECT * FROM tblbadge WHERE badgeId = $1", [badgeId]);
+    const badgeResult = await connection.query(
+      "SELECT * FROM tblbadge WHERE badgeId = $1",
+      [badgeId]
+    );
 
     if (badgeResult.rows.length === 0) {
       res.status(404).send("Badge not found");
     } else {
       // 해당 ID의 배지를 데이터베이스에서 삭제
-      await connection.query("DELETE FROM tblbadge WHERE badgeId = $1", [badgeId]);
+      await connection.query("DELETE FROM tblbadge WHERE badgeId = $1", [
+        badgeId,
+      ]);
       res.status(200).send("Badge deleted successfully");
     }
   } catch (error) {
