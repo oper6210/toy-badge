@@ -71,7 +71,7 @@ app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
 app.post("/badge", upload.single("image"), async (req, res) => {
   try {
     const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
-
+    const gitImageUrl = `https://github.com/oper6210/image/blob/main/${req.file.filename}?raw=true`;    //metadata 의 imageUrl을 구글 클라우드 스토리지에서 들고오면 이미지가 안보여서 git에 하드코딩함
     // Fetch the last badgeid
     const lastBadgeIdResult = await connection.query(
       "SELECT badgeid FROM tblbadge ORDER BY badgeid DESC LIMIT 1"
@@ -86,7 +86,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     // JSON 데이터 준비
     const jsonData = {
       description: req.body.content,
-      imageurl: imageUrl,
+      imageurl: gitImageUrl,
       name: req.body.badgeName,
     };
 
