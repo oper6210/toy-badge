@@ -72,24 +72,15 @@ app.post("/badge", upload.single("image"), async (req, res) => {
   try {
     const imageUrl = `https://storage.googleapis.com/bagde_stg/${req.file.filename}`;
     // Fetch the last badgeid
-
-    const result = await connection.query(
-      "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [imageUrl, badgeName, content, detailContent, formattedDatetime]
+    const lastBadgeIdResult = await connection.query(
+      "SELECT badgeid FROM tblcountbadge ORDER BY badgeid DESC LIMIT 1"
     );
 
-    const badgeId = result.rows[0].badgeid;
-
-
-    // const lastBadgeIdResult = await connection.query(
-    //   "SELECT badgeid FROM tblbadge ORDER BY badgeid DESC LIMIT 1"
-    // );
-
-    // // Calculate the next badgeid
-    // const nextBadgeId =
-    //   lastBadgeIdResult.rows.length > 0
-    //     ? lastBadgeIdResult.rows[0].badgeid + 1
-    //     : 1;
+    // Calculate the next badgeid
+    const nextBadgeId =
+      lastBadgeIdResult.rows.length > 0
+        ? lastBadgeIdResult.rows[0].badgeid + 1
+        : 1;
 
     // JSON 데이터 준비
     const jsonData = {
@@ -99,7 +90,7 @@ app.post("/badge", upload.single("image"), async (req, res) => {
     };
 
     // Create jsonFilename using the calculated badgeid
-    const jsonFilename = `${badgeId}.json`;
+    const jsonFilename = `${nextBadgeId}.json`;
 
     const bucketName = "bagde_stg";
 
@@ -130,7 +121,10 @@ app.post("/badge", upload.single("image"), async (req, res) => {
       .slice(0, 19)
       .replace("T", " ");
 
-
+    const result = await connection.query(
+      "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [imageUrl, badgeName, content, detailContent, formattedDatetime]
+    );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
